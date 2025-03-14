@@ -1,7 +1,10 @@
 import { Button, Form } from 'react-bootstrap';
 import { useForm } from 'react-hook-form';
 import * as BlogApi from '@/network/api/blog';
-import FormInputField from '@/components/FormInputField';
+import FormInputField from '@/components/form/FormInputField';
+import MarkdownEditor from '@/components/form/MarkdownEditor';
+import { generateSlug } from '@/utils/utils';
+import LoadingButton from '@/components/LoadingButton';
 
 interface CreatePostFormData {
 	slug: string;
@@ -14,7 +17,10 @@ const CreateBlogPostPage = () => {
 	const {
 		register,
 		handleSubmit,
-		formState: { errors },
+		setValue,
+		getValues,
+		watch,
+		formState: { errors, isSubmitting },
 	} = useForm<CreatePostFormData>();
 
 	const onSubmitHandler = async (input: CreatePostFormData) => {
@@ -25,6 +31,13 @@ const CreateBlogPostPage = () => {
 			console.error(error);
 			alert(error);
 		}
+	};
+
+	const generateSlugFromTitle = () => {
+		if (getValues('slug')) return;
+
+		const slug = generateSlug(getValues('title'));
+		setValue('slug', slug, { shouldValidate: true });
 	};
 
 	return (
@@ -38,6 +51,7 @@ const CreateBlogPostPage = () => {
 					placeholder='Post title'
 					maxLength={100}
 					error={errors.title}
+					onBlur={generateSlugFromTitle}
 				/>
 				<FormInputField
 					label='Post slug'
@@ -54,17 +68,16 @@ const CreateBlogPostPage = () => {
 					as='textarea'
 					error={errors.summary}
 				/>
-
-				<Form.Group className='mb-3' controlId='body-input'>
-					<Form.Label>Post body</Form.Label>
-					<Form.Control
-						{...register('body')}
-						placeholder='Post body'
-						as='textarea'
-						// error={errors.body}
-					/>
-				</Form.Group>
-				<Button type='submit'>Create post</Button>
+				<MarkdownEditor
+					label='Post body'
+					register={register('body', { required: 'Required' })}
+					watch={watch}
+					setValue={setValue}
+					error={errors.body}
+				/>
+				<LoadingButton type='submit' isLoading={isSubmitting}>
+					Create post
+				</LoadingButton>
 			</Form>
 		</div>
 	);
