@@ -1,4 +1,4 @@
-import { Button, Form } from 'react-bootstrap';
+import { Form } from 'react-bootstrap';
 import { useForm } from 'react-hook-form';
 import * as BlogApi from '@/network/api/blog';
 import FormInputField from '@/components/form/FormInputField';
@@ -11,6 +11,7 @@ interface CreatePostFormData {
 	title: string;
 	summary: string;
 	body: string;
+	featuredImage: FileList;
 }
 
 const CreateBlogPostPage = () => {
@@ -23,9 +24,21 @@ const CreateBlogPostPage = () => {
 		formState: { errors, isSubmitting },
 	} = useForm<CreatePostFormData>();
 
-	const onSubmitHandler = async (input: CreatePostFormData) => {
+	const onSubmitHandler = async ({
+		title,
+		slug,
+		summary,
+		featuredImage,
+		body,
+	}: CreatePostFormData) => {
 		try {
-			await BlogApi.createBlogPost(input);
+			await BlogApi.createBlogPost({
+				title,
+				slug,
+				summary,
+				featuredImage: featuredImage[0],
+				body,
+			});
 			alert('Post created successfully');
 		} catch (error) {
 			console.error(error);
@@ -67,6 +80,13 @@ const CreateBlogPostPage = () => {
 					maxLength={300}
 					as='textarea'
 					error={errors.summary}
+				/>
+				<FormInputField
+					label='Post image'
+					register={register('featuredImage', { required: 'Required' })}
+					type='file'
+					accept='image/png, image/jpeg'
+					error={errors.featuredImage}
 				/>
 				<MarkdownEditor
 					label='Post body'

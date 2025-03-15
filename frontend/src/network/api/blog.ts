@@ -15,11 +15,17 @@ interface CreateBlogPostFormValues {
 	title: string;
 	summary: string;
 	body: string;
+	featuredImage: File;
 }
 
 export const createBlogPost = async (input: CreateBlogPostFormValues) => {
 	try {
-		const response = await api.post<BlogPost>('/posts', input);
+		const formData = new FormData();
+		Object.entries(input).forEach(([key, value]) => {
+			formData.append(key, value);
+		});
+
+		const response = await api.post<BlogPost>('/posts', formData);
 		return response.data;
 	} catch (error) {
 		console.error(error);
