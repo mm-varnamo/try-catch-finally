@@ -10,6 +10,21 @@ export const getBlogPosts = async () => {
 	}
 };
 
+export async function getAllBlogPostSlugs() {
+	const response = await api.get<string[]>('/posts/slugs');
+
+	return response.data;
+}
+
+export const getBlogPostBySlug = async (slug: string) => {
+	try {
+		const response = await api.get<BlogPost>(`/posts/post/${slug}`);
+		return response.data;
+	} catch (error) {
+		console.error(error);
+	}
+};
+
 interface CreateBlogPostFormValues {
 	slug: string;
 	title: string;
