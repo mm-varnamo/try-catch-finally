@@ -4,6 +4,7 @@ import assertIsDefined from '../utils/assertIsDefined';
 import mongoose from 'mongoose';
 import sharp from 'sharp';
 import env from '../env';
+import createHttpError from 'http-errors';
 
 export const getBlogPosts: RequestHandler = async (req, res, next) => {
 	try {
@@ -11,7 +12,7 @@ export const getBlogPosts: RequestHandler = async (req, res, next) => {
 
 		res.status(200).json(allBlogPosts);
 	} catch (error) {
-		res.status(500).json({ error });
+		next(error);
 	}
 };
 
@@ -22,8 +23,7 @@ export const getAllBlogPostSlugs: RequestHandler = async (req, res, next) => {
 
 		res.status(200).json(slugs);
 	} catch (error) {
-		console.error(error);
-		res.status(500).json({ error });
+		next(error);
 	}
 };
 
@@ -34,13 +34,12 @@ export const getBlogPostBySlug: RequestHandler = async (req, res, next) => {
 		}).exec();
 
 		if (!blogPost) {
-			return res.sendStatus(404);
+			throw createHttpError(404, 'No blog post found for this slug');
 		}
 
 		res.status(200).json(blogPost);
 	} catch (error) {
-		console.error(error);
-		res.status(500).json({ error });
+		next(error);
 	}
 };
 
@@ -63,6 +62,15 @@ export const createBlogPost: RequestHandler<
 	try {
 		assertIsDefined(featuredImage);
 
+		const existingSlug = await BlogPostModel.findOne({ slug }).exec();
+
+		if (existingSlug) {
+			throw createHttpError(
+				409,
+				'Slug already in use, please choose a different one.'
+			);
+		}
+
 		const blogPostId = new mongoose.Types.ObjectId();
 
 		const featuredImageDestiationPath =
@@ -83,6 +91,6 @@ export const createBlogPost: RequestHandler<
 
 		res.status(201).json(newPost);
 	} catch (error) {
-		res.status(500).json({ error });
+		next(error);
 	}
 };
